@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LinkBoard — Share Any Link</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0D1117; --surface: #161B22; --surface2: #21262D;
+    --border: #30363D; --accent: #58A6FF; --accent2: #1F6FEB;
+    --like: #FF6B6B; --text: #E6EDF3; --muted: #8B949E; --green: #3FB950;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; min-height: 100vh; }
+
+  nav {
+    background: rgba(13,17,23,0.92); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100;
+    padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 60px;
+  }
+  .logo { font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+  .nav-right { display: flex; gap: 10px; align-items: center; }
+  .btn { padding: 7px 16px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; }
+  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
+  .btn-primary { background: var(--accent2); color: white; }
+  .btn-primary:hover { background: var(--accent); }
+
+  .container { max-width: 760px; margin: 0 auto; padding: 28px 16px 80px; }
+
+  .submit-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 20px; margin-bottom: 28px; transition: border-color 0.2s;
+  }
+  .submit-box:focus-within { border-color: var(--accent); }
+  .submit-box h3 { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
+  .input-row { display: flex; gap: 10px; margin-bottom: 10px; }
+  .input-row input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; color: var(--text); font-size: 14px;
+    font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s;
+  }
+  .input-row input:focus { border-color: var(--accent); }
+  .submit-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+  .submit-footer span { font-size: 12px; color: var(--muted); }
+  #submitBtn {
+    padding: 9px 20px; font-size: 14px; font-weight: 600; border-radius: 8px;
+    background: var(--accent2); color: white; border: none; cursor: pointer; transition: background 0.15s;
+  }
+  #submitBtn:hover { background: var(--accent); }
+  #submitBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .tabs { display: flex; gap: 6px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    padding: 7px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
+    cursor: pointer; background: var(--surface); border: 1px solid var(--border);
+    color: var(--muted); white-space: nowrap; transition: all 0.15s;
+  }
+  .tab.active, .tab:hover { background: var(--surface2); color: var(--text); border-color: var(--accent); }
+  .tab.active { color: var(--accent); }
+
+  .feed { display: flex; flex-direction: column; gap: 14px; }
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 18px 20px;
+    transition: border-color 0.2s, transform 0.1s; animation: fadeIn 0.3s ease;
+  }
+  .card:hover { border-color: var(--accent); transform: translateY(-1px); }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .card-top { display: flex; align-items: flex-start; gap: 14px; }
+  .favicon {
+    width: 36px; height: 36px; border-radius: 8px; background: var(--surface2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0; overflow: hidden;
+  }
+  .favicon img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+  .card-info { flex: 1; min-width: 0; }
+  .card-title { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-url { font-size: 12px; color: var(--accent); text-decoration: none; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
+  .card-url:hover { text-decoration: underline; }
+  .card-meta { font-size: 12px; color: var(--muted); }
+  .visit-btn {
+    background: var(--surface2); border: 1px solid var(--border); color: var(--text);
+    padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 500;
+    cursor: pointer; text-decoration: none; display: inline-flex; align-items: center;
+    gap: 6px; white-space: nowrap; transition: all 0.15s; flex-shrink: 0;
+  }
+  .visit-btn:hover { background: var(--accent2); border-color: var(--accent2); color: white; }
+
+  .card-actions { display: flex; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); align-items: center; }
+  .action-btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+    border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer;
+    background: var(--surface2); border: 1px solid var(--border); color: var(--muted);
+    transition: all 0.15s; user-select: none;
+  }
+  .like-btn:hover, .like-btn.liked { background: rgba(255,107,107,0.12); border-color: var(--like); color: var(--like); }
+  .like-btn.pulse { animation: heartPulse 0.35s ease; }
+  @keyframes heartPulse { 0% { transform: scale(1); } 40% { transform: scale(1.25); } 70% { transform: scale(0.95); } 100% { transform: scale(1); } }
+  .comment-toggle-btn:hover { background: rgba(88,166,255,0.1); border-color: var(--accent); color: var(--accent); }
+
+  .comments-section { margin-top: 14px; display: none; flex-direction: column; gap: 10px; }
+  .comments-section.open { display: flex; }
+  .comment-list { display: flex; flex-direction: column; gap: 8px; }
+  .comment-item { background: var(--surface2); border-radius: 10px; padding: 10px 14px; font-size: 13px; }
+  .comment-author { font-weight: 600; color: var(--accent); margin-right: 6px; font-size: 12px; }
+  .comment-time { color: var(--muted); font-size: 11px; margin-left: 6px; }
+  .comment-input-row { display: flex; gap: 8px; }
+  .comment-input {
+    flex: 1; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 9px 12px; color: var(--text);
+    font-size: 13px; font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.2s;
+  }
+  .comment-input:focus { border-color: var(--accent); }
+  .comment-send { background: var(--accent2); border: none; border-radius: 8px; padding: 9px 14px; color: white; font-size: 13px; cursor: pointer; font-weight: 500; transition: background 0.15s; }
+  .comment-send:hover { background: var(--accent); }
+  .no-comments { color: var(--muted); font-size: 13px; text-align: center; padding: 8px 0; }
+
+  .empty { text-align: center; padding: 60px 20px; }
+  .empty-icon { font-size: 48px; margin-bottom: 14px; }
+  .empty h3 { font-size: 18px; margin-bottom: 8px; }
+  .empty p { color: var(--muted); font-size: 14px; }
+
+  .loading { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+  .loading-spinner { display: inline-block; width: 24px; height: 24px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 20px; font-size: 14px; color: var(--text);
+    z-index: 999; transition: transform 0.3s ease; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; padding: 28px; width: 90%; max-width: 440px;
+    transform: scale(0.95); transition: transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform: scale(1); }
+  .modal h3 { font-size: 18px; margin-bottom: 6px; }
+  .modal p { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  .modal input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 11px 14px; color: var(--text);
+    font-size: 14px; font-family: 'Inter', sans-serif; outline: none; margin-bottom: 10px; transition: border-color 0.2s;
+  }
+  .modal input:focus { border-color: var(--accent); }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+  .modal-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .modal-tab { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); font-size: 13px; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .modal-tab.active { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,0.1); }
+
+  @media (max-width: 520px) { .card-top { flex-wrap: wrap; } .input-row { flex-direction: column; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Link<span>Board</span></div>
+  <div class="nav-right" id="navRight">
+    <button class="btn btn-ghost" onclick="openAuth('login')">Login</button>
+    <button class="btn btn-primary" onclick="openAuth('signup')">Join Free</button>
+  </div>
+</nav>
+
+<div class="container">
+  <div class="submit-box">
+    <h3>🔗 कोई भी Link Share करो</h3>
+    <div class="input-row">
+      <input type="text" id="linkTitleInput" placeholder="Title — इस link के बारे में बताओ" />
+    </div>
+    <div class="input-row">
+      <input type="text" id="linkUrlInput" placeholder="https://your-link.com/..." />
+    </div>
+    <div class="submit-footer">
+      <span>🟢 Ad links, blog posts, YouTube — सब allowed है</span>
+      <button id="submitBtn" onclick="submitLink()">Share करो →</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="setTab(this,'new')">🆕 New</div>
+    <div class="tab" onclick="setTab(this,'top')">⭐ Top</div>
+  </div>
+
+  <div class="feed" id="feed">
+    <div class="loading">
+      <div class="loading-spinner"></div>
+      <div>Links load हो रही हैं...</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="authModal" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <h3 id="authTitle">👋 Welcome to LinkBoard</h3>
+    <p id="authSubtitle">Account बनाओ — free है!</p>
+    <div class="modal-tabs">
+      <div class="modal-tab active" id="tabLogin" onclick="switchAuthTab('login')">Login</div>
+      <div class="modal-tab" id="tabSignup" onclick="switchAuthTab('signup')">Sign Up</div>
+    </div>
+    <input type="text" id="authUsername" placeholder="Username" />
+    <input type="email" id="authEmail" placeholder="Email" />
+    <input type="password" id="authPassword" placeholder="Password (min 6 char)" />
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeAuth()">Cancel</button>
+      <button class="btn btn-primary" id="authSubmitBtn" onclick="doAuth()">Join करो</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, arrayUnion, arrayRemove, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+  // ── FIREBASE CONFIG ──────────────────────────────────────
+  const firebaseConfig = {
+    apiKey: "AIzaSyBucjp-JTQ6L3Gu3lD7BfpMei3E0UyscTU",
+    authDomain: "linkmedia-6d400.firebaseapp.com",
+    projectId: "linkmedia-6d400",
+    storageBucket: "linkmedia-6d400.firebasestorage.app",
+    messagingSenderId: "179410039147",
+    appId: "1:179410039147:web:91e68bab19e772ad369c2e"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const auth = getAuth(app);
+
+  // ── STATE ────────────────────────────────────────────────
+  let currentUser = null;
+  let currentTab = 'new';
+  let unsubscribe = null;
+
+  // ── AUTH STATE ───────────────────────────────────────────
+  onAuthStateChanged(auth, (user) => {
+    currentUser = user;
+    updateNavUI();
+  });
+
+  function updateNavUI() {
+    const nav = document.getElementById('navRight');
+    if (currentUser) {
+      nav.innerHTML = `
+        <span style="font-size:13px; color:var(--green);">✅ @${escHtml(currentUser.displayName || currentUser.email)}</span>
+        <button class="btn btn-ghost" onclick="window.doLogout()">Logout</button>`;
+    } else {
+      nav.innerHTML = `
+        <button class="btn btn-ghost" onclick="window.openAuth('login')">Login</button>
+        <button class="btn btn-primary" onclick="window.openAuth('signup')">Join Free</button>`;
+    }
+  }
+
+  // ── FIRESTORE LIVE FEED ──────────────────────────────────
+  function loadFeed() {
+    if (unsubscribe) unsubscribe();
+    const feed = document.getElementById('feed');
+    feed.innerHTML = `<div class="loading"><div class="loading-spinner"></div><div>Links load हो रही हैं...</div></div>`;
+
+    const q = query(collection(db, "links"), orderBy("createdAt", "desc"));
+
+    unsubscribe = onSnapshot(q, (snapshot) => {
+      const links = [];
+      snapshot.forEach(d => links.push({ id: d.id, ...d.data() }));
+
+      if (currentTab === 'top') {
+        links.sort((a, b) => (b.likes?.length || 0) - (a.likes?.length || 0));
+      }
+
+      renderFeed(links);
+    }, (err) => {
+      feed.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><h3>Load नहीं हुआ</h3><p>${err.message}</p></div>`;
+    });
+  }
+
+  // ── RENDER ───────────────────────────────────────────────
+  function getDomain(url) {
+    try { return new URL(url).hostname.replace('www.', ''); } catch { return url.slice(0, 30); }
+  }
+
+  function timeAgo(ts) {
+    if (!ts) return 'अभी';
+    const sec = Math.floor((Date.now() - ts.toMillis()) / 1000);
+    if (sec < 60) return 'अभी';
+    if (sec < 3600) return `${Math.floor(sec/60)} min पहले`;
+    if (sec < 86400) return `${Math.floor(sec/3600)} घंटे पहले`;
+    return `${Math.floor(sec/86400)} दिन पहले`;
+  }
+
+  function renderFeed(links) {
+    const feed = document.getElementById('feed');
+    if (!links.length) {
+      feed.innerHTML = `<div class="empty"><div class="empty-icon">🔗</div><h3>अभी कोई link नहीं</h3><p>सबसे पहले तुम share करो!</p></div>`;
+      return;
+    }
+    feed.innerHTML = links.map(link => renderCard(link)).join('');
+  }
+
+  function renderCard(link) {
+    const domain = getDomain(link.url || '');
+    const likes = link.likes || [];
+    const isLiked = currentUser && likes.includes(currentUser.uid);
+    const comments = link.comments || [];
+
+    const commentsHtml = comments.map(c => `
+      <div class="comment-item">
+        <span class="comment-author">@${escHtml(c.user)}</span>${escHtml(c.text)}
+        <span class="comment-time">${c.time || ''}</span>
+      </div>`).join('') || `<div class="no-comments">अभी कोई comment नहीं। पहले तुम करो!</div>`;
+
+    return `
+    <div class="card" id="card-${link.id}">
+      <div class="card-top">
+        <div class="favicon">
+          <img src="https://www.google.com/s2/favicons?sz=64&domain=${getDomain(link.url)}" onerror="this.parentNode.innerHTML='🔗'"/>
+        </div>
+        <div class="card-info">
+          <div class="card-title">${escHtml(link.title || 'No Title')}</div>
+          <a class="card-url" href="${escHtml(link.url)}" target="_blank" rel="noopener">${domain}</a>
+          <div class="card-meta">👤 @${escHtml(link.userName || 'Anonymous')} &nbsp;·&nbsp; 🕐 ${timeAgo(link.createdAt)}</div>
+        </div>
+        <a class="visit-btn" href="${escHtml(link.url)}" target="_blank" rel="noopener">Visit ↗</a>
+      </div>
+      <div class="card-actions">
+        <button class="action-btn like-btn ${isLiked ? 'liked' : ''}" onclick="window.toggleLike('${link.id}', ${isLiked})">
+          ${isLiked ? '❤️' : '🤍'} ${likes.length}
+        </button>
+        <button class="action-btn comment-toggle-btn" onclick="toggleComments('${link.id}')">
+          💬 ${comments.length} Comments
+        </button>
+        <span style="margin-left:auto; font-size:11px; color:var(--muted);">🚫 No Share</span>
+      </div>
+      <div class="comments-section" id="comments-${link.id}">
+        <div class="comment-list" id="comment-list-${link.id}">${commentsHtml}</div>
+        <div class="comment-input-row">
+          <input class="comment-input" id="comment-input-${link.id}" placeholder="Comment लिखो..."
+            onkeydown="if(event.key==='Enter') window.postComment('${link.id}')"/>
+          <button class="comment-send" onclick="window.postComment('${link.id}')">Send</button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // ── ACTIONS ──────────────────────────────────────────────
+  window.toggleLike = async (id, isLiked) => {
+    if (!currentUser) { showToast('❤️ Like के लिए Login करो!'); openAuth('login'); return; }
+    const ref = doc(db, "links", id);
+    try {
+      await updateDoc(ref, {
+        likes: isLiked ? arrayRemove(currentUser.uid) : arrayUnion(currentUser.uid)
+      });
+      const btn = document.querySelector(`#card-${id} .like-btn`);
+      if (btn) { btn.classList.add('pulse'); setTimeout(() => btn.classList.remove('pulse'), 400); }
+    } catch(e) { showToast('Error: ' + e.message); }
+  };
+
+  window.postComment = async (id) => {
+    if (!currentUser) { showToast('💬 Comment के लिए Login करो!'); openAuth('login'); return; }
+    const input = document.getElementById(`comment-input-${id}`);
+    const text = input.value.trim();
+    if (!text) return;
+    const ref = doc(db, "links", id);
+    try {
+      await updateDoc(ref, {
+        comments: arrayUnion({
+          user: currentUser.displayName || currentUser.email.split('@')[0],
+          text: text,
+          time: 'अभी',
+          uid: currentUser.uid
+        })
+      });
+      input.value = '';
+      showToast('✅ Comment post हो गया!');
+    } catch(e) { showToast('Error: ' + e.message); }
+  };
+
+  window.submitLink = async () => {
+    if (!currentUser) { showToast('🔗 Share के लिए Login करो!'); openAuth('login'); return; }
+    const title = document.getElementById('linkTitleInput').value.trim();
+    const url = document.getElementById('linkUrlInput').value.trim();
+    if (!title) { showToast('⚠️ Title लिखो!'); return; }
+    if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) {
+      showToast('⚠️ Valid URL डालो (https:// से शुरू)'); return;
+    }
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = 'Saving...';
+    try {
+      await addDoc(collection(db, "links"), {
+        title, url,
+        userName: currentUser.displayName || currentUser.email.split('@')[0],
+        uid: currentUser.uid,
+        likes: [],
+        comments: [],
+        createdAt: serverTimestamp()
+      });
+      document.getElementById('linkTitleInput').value = '';
+      document.getElementById('linkUrlInput').value = '';
+      showToast('🚀 Link share हो गया!');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch(e) { showToast('Error: ' + e.message); }
+    btn.disabled = false; btn.textContent = 'Share करो →';
+  };
+
+  // ── TABS ─────────────────────────────────────────────────
+  window.setTab = (el, tab) => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    currentTab = tab;
+    loadFeed();
+  };
+
+  // ── COMMENTS TOGGLE ──────────────────────────────────────
+  window.toggleComments = (id) => {
+    const s = document.getElementById(`comments-${id}`);
+    s.classList.toggle('open');
+  };
+
+  // ── AUTH ─────────────────────────────────────────────────
+  let authMode = 'signup';
+
+  window.openAuth = (mode) => {
+    authMode = mode;
+    switchAuthTab(mode);
+    document.getElementById('authModal').classList.add('open');
+  };
+
+  window.closeAuth = () => document.getElementById('authModal').classList.remove('open');
+  window.closeModalOutside = (e) => { if (e.target === e.currentTarget) closeAuth(); };
+
+  window.switchAuthTab = (mode) => {
+    authMode = mode;
+    document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
+    document.getElementById('tabSignup').classList.toggle('active', mode === 'signup');
+    document.getElementById('authUsername').style.display = mode === 'signup' ? 'block' : 'none';
+    document.getElementById('authTitle').textContent = mode === 'login' ? '👋 Wapas Aao!' : '🚀 Join LinkBoard';
+    document.getElementById('authSubtitle').textContent = mode === 'login' ? 'Login karo apne account mein' : 'Free account banao!';
+    document.getElementById('authSubmitBtn').textContent = mode === 'login' ? 'Login करो' : 'Join करो';
+  };
+
+  window.doAuth = async () => {
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    const username = document.getElementById('authUsername').value.trim();
+    if (!email || !password) { showToast('⚠️ Email aur Password bharo!'); return; }
+    const btn = document.getElementById('authSubmitBtn');
+    btn.disabled = true; btn.textContent = 'Wait...';
+    try {
+      if (authMode === 'signup') {
+        if (!username) { showToast('⚠️ Username bharo!'); btn.disabled = false; btn.textContent = 'Join करो'; return; }
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(cred.user, { displayName: username });
+        showToast(`🎉 Welcome @${username}!`);
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+        showToast('✅ Login ho gaye!');
+      }
+      closeAuth();
+    } catch(e) {
+      const msg = e.code === 'auth/email-already-in-use' ? 'Email already use mein hai!' :
+                  e.code === 'auth/wrong-password' ? 'Password galat hai!' :
+                  e.code === 'auth/user-not-found' ? 'Account nahi mila!' : e.message;
+      showToast('❌ ' + msg);
+    }
+    btn.disabled = false;
+    btn.textContent = authMode === 'login' ? 'Login करो' : 'Join करो';
+  };
+
+  window.doLogout = async () => {
+    await signOut(auth);
+    showToast('👋 Logout ho gaye!');
+  };
+
+  // ── TOAST ────────────────────────────────────────────────
+  let toastTimer;
+  window.showToast = (msg) => {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+  };
+
+  function escHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ── INIT ─────────────────────────────────────────────────
+  loadFeed();
+
+  // expose for inline handlers
+  window.openAuth = window.openAuth;
+  window.submitLink = window.submitLink;
+  window.setTab = window.setTab;
+</script>
+</body>
+</html>
